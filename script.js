@@ -1,52 +1,65 @@
-document.getElementById('myForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    if (validateForm()) {
-        alert('Form submitted successfully!');
-    }
-});
-
-function validateForm() {
-    let isValid = true;
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('validationForm');
     
-    isValid = validateField('fullName', /^[A-Za-z\s]{2,}$/, 'nameError', 'Invalid name') && isValid;
-    isValid = validateField('email', /^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'emailError', 'Invalid email') && isValid;
-    isValid = validateField('phone', /^\d{10,15}$/, 'phoneError', 'Invalid phone number') && isValid;
-    isValid = validateField('password', /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/, 'passwordError', 'Password must be at least 8 characters with uppercase, lowercase, and number') && isValid;
-    
-    return isValid;
-}
+    // Real-time validation
+    const fields = ['fullName', 'email', 'phone', 'password'];
+    fields.forEach(field => {
+        document.getElementById(field).addEventListener('input', function() {
+            validateField(this.id);
+        });
+    });
 
-function validateField(fieldId, regex, errorId, errorMsg) {
-    const field = document.getElementById(fieldId);
-    const error = document.getElementById(errorId);
-    const isValid = regex.test(field.value);
-    
-    field.classList.toggle('invalid', !isValid);
-    error.textContent = isValid ? '' : errorMsg;
-    return isValid;
-}
-
-// Real-time validation
-['fullName', 'email', 'phone', 'password'].forEach(field => {
-    document.getElementById(field).addEventListener('input', function() {
-        validateField(field, getRegex(field), `${field}Error`, getErrorMessage(field));
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (validateForm()) {
+            alert('Form submitted successfully!');
+            form.reset();
+            fields.forEach(field => {
+                document.getElementById(field).classList.remove('invalid');
+            });
+        }
     });
 });
 
-function getRegex(fieldId) {
-    switch(fieldId) {
-        case 'fullName': return /^[A-Za-z\s]{2,}$/;
-        case 'email': return /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        case 'phone': return /^\d{10,15}$/;
-        case 'password': return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-    }
+function validateForm() {
+    return [
+        validateField('fullName'),
+        validateField('email'),
+        validateField('phone'),
+        validateField('password')
+    ].every(result => result);
 }
 
-function getErrorMessage(fieldId) {
+function validateField(fieldId) {
+    const field = document.getElementById(fieldId);
+    const errorElement = document.getElementById(`${fieldId}Error`);
+    let isValid = false;
+    let errorMessage = '';
+
     switch(fieldId) {
-        case 'fullName': return 'Only letters and spaces allowed';
-        case 'email': return 'Invalid email format';
-        case 'phone': return '10-15 digits required';
-        case 'password': return 'Need 8+ chars with uppercase, lowercase, number';
+        case 'fullName':
+            isValid = /^[A-Za-z\s]{2,}$/.test(field.value.trim());
+            errorMessage = 'Only letters and spaces allowed';
+            break;
+            
+        case 'email':
+            isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.value);
+            errorMessage = 'Invalid email format';
+            break;
+            
+        case 'phone':
+            isValid = /^\d{10,15}$/.test(field.value);
+            errorMessage = '10-15 digits required';
+            break;
+            
+        case 'password':
+            isValid = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(field.value);
+            errorMessage = '8+ chars with uppercase, lowercase, and number';
+            break;
     }
+
+    field.classList.toggle('invalid', !isValid);
+    errorElement.textContent = isValid ? '' : errorMessage;
+    return isValid;
 }
